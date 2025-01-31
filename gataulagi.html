@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project ABAL ABAL</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <style>
+        :root {
+            --primary-color: #6cb;
+            --secondary-color: #fffc;
+            --background-color: #8ff;
+            --dark-background: #1e1e1e;
+            --dark-text: #f8e0e0;
+            --gradient: linear-gradient(135deg, #01f8cb 0%, #8fc 100%);
+            --neon-shadow: 0 0 10px #fff8, 0 0 20px #08f;
+            --border-radius: 20px;
+            --transition-speed: 0.3s;
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--gradient);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #233ff;
+            transition: background-color var(--transition-speed) ease, color var(--transition-speed) ease;
+        }
+        body.dark-mode {
+            background: var(--dark-background);
+            color: var(--dark-text);
+        }
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background-color: var(--background-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--neon-shadow);
+            padding: 40px;
+            text-align: center;
+            transition: background-color var(--transition-speed) ease, color var(--transition-speed) ease;
+        }
+        .dark-mode .container {
+            background-color: var(--dark-background);
+            color: var(--dark-text);
+        }
+        .header h1 {
+            font-size: 3em;
+            font-family: 'Orbitron', sans-serif;
+            color: var(--primary-color);
+            text-shadow: var(--neon-shadow);
+        }
+        .header p {
+            font-size: 1.2em;
+            color: #555;
+        }
+        .search-box {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-top: 30px;
+        }
+        input {
+            padding: 15px;
+            font-size: 1em;
+            border-radius: var(--border-radius);
+            border: 1px solid #ddd;
+            outline: none;
+            transition: border var(--transition-speed) ease, background-color var(--transition-speed) ease, color var(--transition-speed) ease;
+            width: 100%;
+        }
+        .dark-mode input {
+            background-color: #333;
+            color: var(--dark-text);
+            border-color: #555;
+        }
+        input:focus {
+            border-color: var(--primary-color);
+            box-shadow: var(--neon-shadow);
+        }
+        button {
+            padding: 15px;
+            background-color: var(--primary-color);
+            color: #fff;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background-color var(--transition-speed) ease, transform var(--transition-speed) ease;
+        }
+        button:hover {
+            background-color: var(--secondary-color);
+            transform: scale(1.05);
+            box-shadow: var(--neon-shadow);
+        }
+        .footer {
+            margin-top: 50px;
+        }
+        .footer button {
+            background-color: transparent;
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+            font-size: 1.2em;
+            padding: 10px 20px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: background-color var(--transition-speed) ease;
+        }
+        .footer button:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        .dark-mode-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: var(--primary-color);
+            color: #fff;
+            border: none;
+            border-radius: var(--border-radius);
+            padding: 10px 20px;
+            cursor: pointer;
+            transition: background-color var(--transition-speed) ease;
+        }
+        .dark-mode-toggle:hover {
+            background-color: var(--secondary-color);
+        }
+        .result-card {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: var(--secondary-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--neon-shadow);
+            transition: background-color var(--transition-speed) ease, color var(--transition-speed) ease;
+        }
+        .dark-mode .result-card {
+            background-color: #333;
+            color: var(--dark-text);
+        }
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .toast {
+            visibility: hidden;
+            min-width: 250px;
+            margin-left: -125px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: var(--border-radius);
+            padding: 16px;
+            position: fixed;
+            z-index: 1;
+            left: 50%;
+            bottom: 30px;
+            font-size: 17px;
+            transition: visibility 0.5s, opacity 0.5s ease-in-out;
+        }
+        .toast.show {
+            visibility: visible;
+            opacity: 1;
+        }
+        .ai-prediction {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: var(--primary-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--neon-shadow);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Nomor Information</h1>
+            <p>Selamat datang di Number Information</p>
+        </div>
+
+        <div class="search-box">
+            <input type="tel" id="phoneInput" placeholder="tulis nomor dengan format +62" list="countryCodes">
+            <datalist id="countryCodes">
+                <option value="+62">Indonesia</option>
+                <option value="+1">USA</option>
+                <option value="+44">UK</option>
+                <!-- Add more country codes as needed -->
+            </datalist>
+            <button onclick="startTracking()">Mencari</button>
+        </div>
+
+        <div class="search-box">
+            <button onclick="getUserIP()">Get My IP Address</button>
+            <p id="ipAddressResult" style="display:none;">Your IP Address: <span id="ipAddress"></span></p>
+        </div>
+
+        <div id="resultSection" class="result-card" style="display:none;">
+            <h3>Phone Information</h3>
+            <p><strong>Number:</strong> <span id="number"></span></p>
+            <p><strong>Country:</strong> <span id="country"></span></p>
+            <p><strong>Carrier:</strong> <span id="carrier"></span></p>
+            <p><strong>Type:</strong> <span id="type"></span></p>
+            <p><strong>City:</strong> <span id="city"></span></p>
+            <div id="aiPrediction" class="ai-prediction" style="display:none;">
+                <h3>AI Prediction</h3>
+                <p><strong>Predicted Location:</strong> <span id="predictedLocation"></span></p>
+            </div>
+        </div>
+
+        <div class="footer">
+            <button class="history-btn" onclick="viewHistory()">View History</button>
+        </div>
+    </div>
+
+    <button class="dark-mode-toggle" onclick="toggleDarkMode()">🌓</button>
+
+    <div id="loadingSpinner" class="loading-spinner" style="display:none;"></div>
+    <div id="toast" class="toast">Invalid phone number.</div>
+
+    <script>
+        const apiKeyNumVerify = '57517386c46b3d83e8bbea6e8b5abadb';
+        const apiKeyNumLookup = 'num_live_MzXuX7V8y1YwgfXia3zlVSjj254VmMTar3Pt6Yts';
+        const apiKeyOpenCage = '5c3769a0e2f643f38f5ae41eca12d849';
+        let searchHistory = [];
+
+        // Function to track phone numbers
+        async function startTracking() {
+            const phoneNumber = document.getElementById('phoneInput').value;
+            const resultSection = document.getElementById('resultSection');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const toast = document.getElementById('toast');
+
+            if (!phoneNumber || !isValidPhoneNumber(phoneNumber)) {
+                showToast('Please enter a valid phone number.');
+                return;
+            }
+
+            loadingSpinner.style.display = 'block';
+
+            try {
+                // Using NumVerify API for validation
+                const numVerifyResponse = await fetch(`https://apilayer.net/api/validate?access_key=${apiKeyNumVerify}&number=${phoneNumber}&country_code=&format=1`);
+                const numVerifyData = await numVerifyResponse.json();
+
+                if (!numVerifyData.valid) {
+                    showToast('Invalid phone number.');
+                    return;
+                }
+
+                // Using NumLookup API for extra phone information
+                const numLookupResponse = await fetch(`https://api.numlookupapi.com/v1/validate/${phoneNumber}?apikey=${apiKeyNumLookup}`);
+                const numLookupData = await numLookupResponse.json();
+
+                if (!numLookupData.valid) {
+                    showToast('Invalid phone number.');
+                    return;
+                }
+
+                searchHistory.push({ phoneNumber, numVerifyData, numLookupData });
+                updateUI(numVerifyData, numLookupData);
+                resultSection.style.display = 'block';
+
+                // Call OpenCage API for city based on coordinates from NumLookup
+                getCityFromCoordinates(numLookupData.location.lat, numLookupData.location.lng);
+
+                // AI Prediction for location
+                predictLocation(numLookupData.location.lat, numLookupData.location.lng);
+            } catch (error) {
+                showToast('Error occurred while processing the request.');
+                console.error('Error:', error);
+            } finally {
+                loadingSpinner.style.display = 'none';
+            }
+        }
+
+        // Validate phone number format
+        function isValidPhoneNumber(phoneNumber) {
+            const phonePattern = /^\+?\d{10,15}$/;
+            return phonePattern.test(phoneNumber);
+        }
+
+        // Update UI with phone data
+        function updateUI(numVerifyData, numLookupData) {
+            document.getElementById('number').textContent = numVerifyData.number;
+            document.getElementById('country').textContent = numVerifyData.country_name;
+            document.getElementById('carrier').textContent = numVerifyData.carrier;
+            document.getElementById('type').textContent = numVerifyData.line_type;
+        }
+
+        // Function to get city from coordinates using OpenCage API
+        async function getCityFromCoordinates(lat, lon) {
+            try {
+                const response = await fetch(`https://api.opencagedata.com/geocode/v1/json?q=${lat}+${lon}&key=${apiKeyOpenCage}`);
+                const data = await response.json();
+
+                if (data.results.length > 0) {
+                    const city = data.results[0].components.city || data.results[0].components.town || data.results[0].components.village;
+                    document.getElementById('city').textContent = city || 'City not found';
+                } else {
+                    document.getElementById('city').textContent = 'City not found';
+                }
+            } catch (error) {
+                console.error('Error getting city:', error);
+            }
+        }
+
+        // Function to get user IP address
+        async function getUserIP() {
+            try {
+                const ipResponse = await fetch('https://api.ipify.org?format=json');
+                const ipData = await ipResponse.json();
+                document.getElementById('ipAddress').textContent = ipData.ip;
+                document.getElementById('ipAddressResult').style.display = 'block';
+            } catch (error) {
+                showToast('Error occurred while fetching IP address.');
+                console.error('Error:', error);
+            }
+        }
+
+        // View search history
+        function viewHistory() {
+            alert(JSON.stringify(searchHistory, null, 2));
+        }
+
+        // Toggle dark mode
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+        }
+
+        // Show toast notification
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // AI Prediction for location
+        async function predictLocation(lat, lon) {
+            try {
+                const response = await fetch(`https://api.ai-prediction-service.com/predict?lat=${lat}&lon=${lon}`);
+                const data = await response.json();
+                document.getElementById('predictedLocation').textContent = data.predictedLocation;
+                document.getElementById('aiPrediction').style.display = 'block';
+            } catch (error) {
+                console.error('Error predicting location:', error);
+            }
+        }
+    </script>
+</body>
+</html>
